@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Upload Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff1493;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 300;
+            text-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
+        }
+
+        .upload-section {
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(255, 20, 147, 0.1);
+            border: 1px solid rgba(255, 20, 147, 0.2);
+        }
+
+        .upload-area {
+            border: 3px dashed #ff1493;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            background: rgba(255, 20, 147, 0.05);
+        }
+
+        .upload-area:hover {
+            border-color: #ff69b4;
+            background: rgba(255, 20, 147, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 20, 147, 0.3);
+        }
+
+        .upload-area.dragover {
+            border-color: #ff69b4;
+            background: rgba(255, 20, 147, 0.15);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 20, 147, 0.4);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #ff1493;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(255, 20, 147, 0.5);
+        }
+
+        .upload-text {
+            font-size: 1.5rem;
+            color: #ff1493;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            color: #ff69b4;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+            color: #000000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 65, 0.4);
+            background: linear-gradient(135deg, #00ff41 0%, #00ff65 100%);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .view-btn {
+            background: rgba(255, 20, 147, 0.1);
+            border: 2px solid #ff1493;
+            color: #ff1493;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .view-btn.active,
+        .view-btn:hover {
+            background: #00ff41;
+            color: #000000;
+            border-color: #00ff41;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+
+        .clear-btn {
+            background: #00ff41;
+            color: #000000;
+            font-weight: 600;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #00ff65;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.4);
+        }
+
+        .gallery {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+
+        .gallery.list-view {
+            grid-template-columns: 1fr;
+        }
+
+        .media-item {
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(255, 20, 147, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            border: 1px solid rgba(255, 20, 147, 0.2);
+        }
+
+        .media-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(255, 20, 147, 0.2);
+        }
+
+        .media-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery.list-view .media-preview {
+            height: 150px;
+        }
+
+        .media-info {
+            padding: 15px;
+        }
+
+        .media-name {
+            font-weight: 500;
+            color: #ff1493;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+        .media-details {
+            font-size: 12px;
+            color: #ff69b4;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .media-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #00ff41;
+            color: #000000;
+            font-weight: 600;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #00ff65;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+        }
+
+        .action-btn.delete {
+            background: #ff1493;
+            color: white;
+        }
+
+        .action-btn.delete:hover {
+            background: #ff69b4;
+            box-shadow: 0 0 10px rgba(255, 20, 147, 0.4);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41, #ff1493);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .status-message.show {
+            opacity: 1;
+        }
+
+        .status-message.success {
+            background: rgba(0, 255, 65, 0.1);
+            color: #00ff41;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+        }
+
+        .status-message.error {
+            background: rgba(255, 20, 147, 0.1);
+            color: #ff1493;
+            border: 1px solid rgba(255, 20, 147, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #ff69b4;
+            font-size: 1.2rem;
+            padding: 60px 20px;
+            background: rgba(20, 20, 20, 0.7);
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 20, 147, 0.2);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            color: #ff1493;
+            text-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Password Protection Styles */
+        .password-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .password-container {
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 50px 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(255, 20, 147, 0.2);
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid rgba(255, 20, 147, 0.3);
+        }
+
+        .password-container h1 {
+            color: #ff1493;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            font-weight: 300;
+            text-shadow: 0 0 15px rgba(255, 20, 147, 0.5);
+        }
+
+        .password-container p {
+            color: #ff69b4;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .password-form {
+            margin-bottom: 20px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #ff1493;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ff1493;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .password-input:focus {
+            border-color: #ff69b4;
+            box-shadow: 0 0 0 3px rgba(255, 20, 147, 0.1);
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .password-btn {
+            background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+            color: #000000;
+            font-weight: 600;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .password-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 65, 0.3);
+            background: linear-gradient(135deg, #00ff41 0%, #00ff65 100%);
+        }
+
+        .password-btn:active {
+            transform: translateY(0);
+        }
+
+        .password-error {
+            color: #ff1493;
+            font-weight: 500;
+            font-size: 14px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
+        }
+
+        .password-error.show {
+            opacity: 1;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #00ff41;
+            color: #000000;
+            font-weight: 600;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        .logout-btn:hover {
+            background: #00ff65;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .view-controls {
+                justify-content: center;
+            }
+
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .upload-area {
+                padding: 40px 20px;
+            }
+
+            .password-container {
+                padding: 40px 30px;
+            }
+
+            .password-container h1 {
+                font-size: 2rem;
+            }
+
+            .logout-btn {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 20px auto;
+                display: block;
+            }
+        }
+    
+        /* Light theme overrides */
+        body.light-theme {
+            background: #f9f9f9;
+            color: #000;
+        }
+
+        body.light-theme .upload-section,
+        body.light-theme .media-item,
+        body.light-theme .password-container,
+        body.light-theme .empty-state {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #000;
+        }
+
+        body.light-theme .upload-area {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-theme .upload-area:hover,
+        body.light-theme .upload-area.dragover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .view-btn,
+        body.light-theme .clear-btn,
+        body.light-theme .action-btn {
+            color: #000;
+        }
+
+        body.light-theme .password-input {
+            background: #fff;
+            color: #000;
+            border-color: #ccc;
+        }
+
+        body.light-theme .password-btn,
+        body.light-theme .logout-btn,
+        body.light-theme .upload-btn {
+            background: linear-gradient(135deg, #00cc33 0%, #00ff41 100%);
+            color: #000;
+        }
+
+        body.light-theme .status-message.success {
+            background: rgba(0, 255, 65, 0.2);
+            color: green;
+        }
+
+        body.light-theme .status-message.error {
+            background: rgba(255, 0, 0, 0.1);
+            color: red;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Password Protection Screen -->
+    <div class="password-screen" id="passwordScreen">
+        <div class="password-container">
+            <h1>🔒 Access Protected</h1>
+            <p>Please enter the password to access the Media Upload Gallery</p>
+            <div class="password-form">
+                <div style="position: relative;">
+                    <input type="password" id="passwordInput" placeholder="Enter password" class="password-input">
+                    <button type="button" onclick="togglePassword()" style="
+                        position: absolute;
+                        right: 15px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        background: none;
+                        border: none;
+                        color: #ff69b4;
+                        cursor: pointer;
+                        font-size: 0.9rem;
+                        padding: 0;
+                    ">Show</button>
+                </div>
+                <button onclick="checkPassword()" class="password-btn">Access Gallery</button>
+            </div>
+            <div class="password-error" id="passwordError"></div>
+        </div>
+    </div>
+
+    <!-- Main Application (initially hidden) -->
+    <div class="container" id="mainApp" style="display: none;">
+        <h1>📸 Media Upload Gallery</h1>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalFiles">0</span>
+                <span class="stat-label">Total Files</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalImages">0</span>
+                <span class="stat-label">Images</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalVideos">0</span>
+                <span class="stat-label">Videos</span>
+            </div>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Drop files here or click to upload</div>
+                <div class="upload-subtext">Supports images (JPG, PNG, GIF, WebP) and videos (MP4, WebM, AVI, MOV)</div>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose Files
+                </button>
+                <input type="file" id="fileInput" multiple accept="image/*,video/*">
+            </div>
+            
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="status-message" id="statusMessage"></div>
+        </div>
+
+        <div class="controls">
+            <div class="view-controls">
+                <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')">Grid View</button>
+                <button class="view-btn" id="listViewBtn" onclick="setView('list')">List View</button>
+            </div>
+            <button class="clear-btn" onclick="clearAll()">Clear All</button>
+        </div>
+
+        <div class="gallery" id="gallery"></div>
+        
+        <div class="empty-state" id="emptyState">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📷</div>
+            <div>No media files uploaded yet</div>
+            <div style="font-size: 1rem; margin-top: 10px; opacity: 0.7;">
+                Upload some images or videos to get started!
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Button (shown when authenticated) -->
+    <button class="logout-btn" id="themeToggleBtn" onclick="toggleTheme()">Toggle Theme</button>
+    <button class="logout-btn" id="logoutBtn" onclick="logout()" style="display: none;">Logout</button>
+
+    <script>
+        // Password Configuration
+        const CORRECT_PASSWORD = "PassWord123"; // Change this to your desired password
+        let isAuthenticated = false;
+
+        // Check if user is already authenticated (using sessionStorage would require different approach)
+        let sessionAuthenticated = false;
+
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+            const enteredPassword = passwordInput.value;
+
+            if (enteredPassword === CORRECT_PASSWORD) {
+                // Correct password - show main app
+                isAuthenticated = true;
+                sessionAuthenticated = true;
+                document.getElementById('passwordScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'block';
+                
+                // Clear password input
+                passwordInput.value = '';
+                passwordError.classList.remove('show');
+                
+                // Initialize the app
+                renderGallery();
+                updateStats();
+            } else {
+                // Wrong password - show error
+                passwordError.textContent = 'Incorrect password. Please try again.';
+                passwordError.classList.add('show');
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // Shake animation
+                passwordInput.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    passwordInput.style.animation = '';
+                }, 500);
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                isAuthenticated = false;
+                sessionAuthenticated = false;
+                document.getElementById('passwordScreen').style.display = 'flex';
+                document.getElementById('mainApp').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'none';
+                
+                // Focus on password input
+                setTimeout(() => {
+                    document.getElementById('passwordInput').focus();
+                }, 100);
+            }
+        }
+
+        // Handle Enter key in password input
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        // Focus on password input when page loads
+        window.addEventListener('load', () => {
+            document.getElementById('passwordInput').focus();
+        });
+
+        // Add shake animation CSS
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(shakeStyle);
+        let uploadedFiles = [];
+        let currentView = 'grid';
+
+        // File input change handler
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+        // Drag and drop handlers
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFileSelect(e);
+        });
+
+        
+        uploadArea.addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        function handleFileSelect(e) {
+            const files = e.target.files || e.dataTransfer.files;
+            if (!files.length) return;
+
+            for (const file of files) {
+                if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                    showStatus('Unsupported file type.', 'error');
+                    continue;
+                }
+
+                const url = URL.createObjectURL(file);
+                uploadedFiles.push({ name: file.name, type: file.type, url });
+            }
+
+            renderGallery();
+            updateStats();
+        }
+
+        function renderGallery() {
+            const gallery = document.getElementById('gallery');
+            const emptyState = document.getElementById('emptyState');
+            gallery.innerHTML = '';
+
+            if (!uploadedFiles.length) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            for (const file of uploadedFiles) {
+                const mediaItem = document.createElement('div');
+                mediaItem.className = 'media-item';
+
+                const mediaTag = document.createElement(file.type.startsWith('image/') ? 'img' : 'video');
+                mediaTag.className = 'media-preview';
+                mediaTag.src = file.url;
+                if (file.type.startsWith('video/')) mediaTag.controls = true;
+
+                const info = document.createElement('div');
+                info.className = 'media-info';
+                info.innerHTML = `
+                    <div class="media-name">${file.name}</div>
+                    <div class="media-details">
+                        <span>${file.type.split('/')[1].toUpperCase()}</span>
+                    </div>
+                    <div class="media-actions">
+                        <button class="action-btn delete" onclick="deleteFile('${file.url}')">Delete</button>
+                    </div>
+                `;
+
+                mediaItem.appendChild(mediaTag);
+                mediaItem.appendChild(info);
+                gallery.appendChild(mediaItem);
+            }
+
+            document.getElementById('gallery').className = `gallery ${currentView}-view`;
+        }
+
+        function deleteFile(url) {
+            uploadedFiles = uploadedFiles.filter(file => file.url !== url);
+            renderGallery();
+            updateStats();
+        }
+
+        function clearAll() {
+            if (confirm("Are you sure you want to clear all uploaded media?")) {
+                uploadedFiles = [];
+                renderGallery();
+                updateStats();
+            }
+        }
+
+        function updateStats() {
+            const total = uploadedFiles.length;
+            const images = uploadedFiles.filter(f => f.type.startsWith('image/')).length;
+            const videos = uploadedFiles.filter(f => f.type.startsWith('video/')).length;
+
+            document.getElementById('totalFiles').textContent = total;
+            document.getElementById('totalImages').textContent = images;
+            document.getElementById('totalVideos').textContent = videos;
+        }
+
+        function setView(view) {
+            currentView = view;
+            document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+            document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+            document.getElementById('gallery').className = `gallery ${view}-view`;
+        }
+
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('statusMessage');
+            status.textContent = message;
+            status.className = `status-message show ${type}`;
+            setTimeout(() => {
+                status.classList.remove('show');
+            }, 3000);
+        }
+    
+        // Toggle password visibility
+        function togglePassword() {
+            const input = document.getElementById("passwordInput");
+            const btn = input.nextElementSibling;
+            if (input.type === "password") {
+                input.type = "text";
+                btn.textContent = "Hide";
+            } else {
+                input.type = "password";
+                btn.textContent = "Show";
+            }
+        }
+
+        // Light/Dark theme toggle
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+        }
+
+        // Apply saved theme on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+            }
+        });
+
+    </script>
+</body>
+</html>
